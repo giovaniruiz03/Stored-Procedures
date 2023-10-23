@@ -1,0 +1,53 @@
+-- Definindo o delimitador
+DELIMITER $$
+
+CREATE TABLE IF NOT EXISTS tb_cursos (
+    id_curso INT PRIMARY KEY AUTO_INCREMENT,
+    curso VARCHAR(50) NOT NULL
+)$$
+
+CREATE TABLE IF NOT EXISTS tb_alunos (
+    id_aluno INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(30) NOT NULL,
+    sobrenome VARCHAR(50) NOT NULL,
+    dt_nasc DATE,
+    email VARCHAR(60),
+    id_curso INT,
+    FOREIGN KEY (id_curso) REFERENCES tb_cursos(id_curso)
+)$$
+
+CREATE PROCEDURE InserirCurso(IN nome_curso VARCHAR(50))
+BEGIN
+    INSERT INTO tb_cursos (curso) VALUES (nome_curso);
+END$$
+
+CREATE PROCEDURE InserirAluno(IN nome VARCHAR(30), IN sobrenome VARCHAR(50), IN dt_nasc DATE, IN id_curso INT)
+BEGIN
+    DECLARE email_aluno VARCHAR(60);
+    DECLARE contador INT DEFAULT 1;
+    DECLARE email_existente INT;
+    
+    REPEAT
+        SET email_aluno = CONCAT(LOWER(REPLACE(nome, ' ', '.')), '.', LOWER(REPLACE(sobrenome, ' ', '.')), IF(contador > 1, contador, ''), '@facens.br');
+        -- Verificar se o email já existe
+        SELECT COUNT(*) INTO email_existente FROM tb_alunos WHERE email = email_aluno;
+        SET contador = contador + 1;
+    UNTIL email_existente = 0 END REPEAT; -- Volta para verificação
+    
+    INSERT INTO tb_alunos (nome, sobrenome, dt_nasc, email, id_curso) VALUES (nome, sobrenome, dt_nasc, email_aluno, id_curso);
+END$$
+
+-- Chamando a stored procedure para inserir cursos
+CALL InserirCurso('Análise e Desenvolvimento de Sistemas')$$
+CALL InserirCurso('Engenharia de Computação')$$
+
+-- Chamando a stored procedure para inserir alunos
+CALL InserirAluno('Giovani', 'Ruiz', '2003-07-11', 1)$$
+CALL InserirAluno('Giovani', 'Ruiz', '2003-07-11', 2)$$
+
+
+DELIMITER ;
+
+SELECT * FROM tb_alunos;
+
+SELECT * FROM tb_cursos;
